@@ -1,0 +1,29 @@
+spec_version: 1
+name: gradlab
+type: space
+runtime: fastapi
+app: server.app:app
+port: 7860
+description: "Deterministic OpenEnv environment for neural-network training failure diagnosis and repair."
+tags:
+  - "openenv"
+  - "machine-learning"
+  - "deep-learning"
+  - "neural-network-debugging"
+tasks:
+  - id: overfit_rescue
+    name: Overfit Rescue
+    difficulty: easy
+    max_steps: 7
+  - id: noisy_label_curation
+    name: Noisy Label Dataset Curation
+    difficulty: medium
+    max_steps: 8
+  - id: unstable_robustness
+    name: Unstable Architecture and Robustness Failure
+    difficulty: hard
+    max_steps: 8
+scoring:
+  range: [0.0, 1.0]
+  deterministic: true
+  partial_rewards: true
