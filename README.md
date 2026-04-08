@@ -1,3 +1,12 @@
+---
+title: GradLab OpenEnv
+emoji: "🧪"
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+---
+
 # GradLab
 
 GradLab is an OpenEnv-style benchmark for ML and deep-learning research workflows. The agent acts as an ML researcher diagnosing failed neural-network experiments from realistic logs, metrics, dataset signals, architecture notes, gradient statistics, and robustness slices.
