@@ -67,6 +67,9 @@ class TaskSpec:
     evaluation_keywords: Set[str]
     trap_keywords: Set[str]
     max_steps: int = 8
+    grader_name: str = "deterministic_rule_grader"
+    score_range: Tuple[float, float] = (0.0, 1.0)
+    reward_range: Tuple[float, float] = (-1.0, 1.0)
 
 
 def _norm(text: str) -> str:
@@ -198,6 +201,27 @@ class GradLabEnv:
     @classmethod
     def task_ids(cls) -> List[str]:
         return list(TASKS.keys())
+
+    @classmethod
+    def task_catalog(cls) -> List[Dict[str, Any]]:
+        catalog: List[Dict[str, Any]] = []
+        for task in TASKS.values():
+            catalog.append(
+                {
+                    "id": task.task_id,
+                    "name": task.name,
+                    "difficulty": task.difficulty,
+                    "objective": task.objective,
+                    "max_steps": task.max_steps,
+                    "grader": {
+                        "name": task.grader_name,
+                        "type": "deterministic",
+                        "score_range": list(task.score_range),
+                        "reward_range": list(task.reward_range),
+                    },
+                }
+            )
+        return catalog
 
     def reset(self) -> GradLabStepResult:
         self._step = 0

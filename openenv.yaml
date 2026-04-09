@@ -15,14 +15,20 @@ tasks:
     name: Overfit Rescue
     difficulty: easy
     max_steps: 7
+    grader: deterministic_rule_grader
+    score_range: [0.0, 1.0]
   - id: noisy_label_curation
     name: Noisy Label Dataset Curation
     difficulty: medium
     max_steps: 8
+    grader: deterministic_rule_grader
+    score_range: [0.0, 1.0]
   - id: unstable_robustness
     name: Unstable Architecture and Robustness Failure
     difficulty: hard
     max_steps: 8
+    grader: deterministic_rule_grader
+    score_range: [0.0, 1.0]
 scoring:
   range: [0.0, 1.0]
   deterministic: true

@@ -27,7 +27,7 @@ def index() -> dict:
     return {
         "name": "GradLab",
         "description": "OpenEnv-style benchmark for diagnosing neural network training failures.",
-        "tasks": list(TASKS.keys()),
+        "tasks": GradLabEnv.task_catalog(),
         "reset": "/reset",
     }
 
@@ -71,13 +71,38 @@ def state(session_id: str = "default") -> dict:
 @app.get("/tasks")
 def tasks() -> dict:
     return {
-        task_id: {
-            "name": task.name,
-            "difficulty": task.difficulty,
-            "objective": task.objective,
-            "max_steps": task.max_steps,
-        }
-        for task_id, task in TASKS.items()
+        "tasks": GradLabEnv.task_catalog(),
+        "count": len(TASKS),
+    }
+
+
+@app.get("/schema")
+def schema() -> dict:
+    return {
+        "env_name": "gradlab",
+        "task_count": len(TASKS),
+        "tasks": GradLabEnv.task_catalog(),
+        "action_schema": {
+            "kind": "inspect|diagnose|repair|evaluate|finish",
+            "target": "string",
+            "value": "string",
+            "rationale": "string",
+        },
+        "observation_fields": [
+            "task_id",
+            "task_name",
+            "difficulty",
+            "objective",
+            "step",
+            "max_steps",
+            "symptoms",
+            "visible_evidence",
+            "available_actions",
+            "progress",
+            "last_action_error",
+        ],
+        "score_range": [0.0, 1.0],
+        "reward_range": [-1.0, 1.0],
     }
 
 
