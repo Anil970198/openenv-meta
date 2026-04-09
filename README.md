@@ -186,7 +186,7 @@ This README documents the environment’s motivation, task design, action and ob
 
 Optional:
 
-- `GRADLAB_TASK`, default `overfit_rescue`
+- `GRADLAB_TASK`, optional task id; leave unset to run all three tasks
 - `GRADLAB_MAX_STEPS`, default `8`
 - `GRADLAB_SUCCESS_THRESHOLD`, default `0.70`
 
@@ -207,6 +207,8 @@ Example output:
 [STEP] step=2 action={...} reward=0.22 done=false error=null
 [END] success=true steps=7 score=0.850 rewards=0.12,0.12,0.12,0.22,0.10,0.10,0.10
 ```
+
+If `GRADLAB_TASK` is not set, the baseline runs all three tasks in sequence and emits one `[START]`/`[END]` block per task.
 
 ## Running the Server
 
