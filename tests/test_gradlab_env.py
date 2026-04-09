@@ -1,6 +1,8 @@
 import unittest
 
+from graders import GRADER_REGISTRY
 from gradlab_env import GradLabAction, GradLabEnv, TASKS, run_scripted_baseline
+from tasks import list_tasks
 
 
 class GradLabEnvTest(unittest.TestCase):
@@ -40,6 +42,16 @@ class GradLabEnvTest(unittest.TestCase):
             self.assertEqual(rewards_one, rewards_two)
             self.assertGreaterEqual(score_one, 0.0)
             self.assertLessEqual(score_one, 1.0)
+
+    def test_explicit_task_catalog_and_graders_exist(self):
+        tasks = list_tasks()
+        self.assertEqual(len(tasks), 3)
+        for task in tasks:
+            self.assertIn(task["id"], GRADER_REGISTRY)
+            env = GradLabEnv(task["id"])
+            grade = GRADER_REGISTRY[task["id"]](env.state())
+            self.assertGreaterEqual(grade["score"], 0.0)
+            self.assertLessEqual(grade["score"], 1.0)
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ from gradlab_env import GradLabAction, make_env
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 HF_TOKEN = os.getenv("HF_TOKEN")
-TASK_NAME = os.getenv("GRADLAB_TASK", "overfit_rescue")
+TASK_NAME = os.getenv("GRADLAB_TASK", "all")
 BENCHMARK = os.getenv("GRADLAB_BENCHMARK", "gradlab")
 MAX_STEPS = int(os.getenv("GRADLAB_MAX_STEPS", "8"))
 TEMPERATURE = float(os.getenv("GRADLAB_TEMPERATURE", "0.2"))
@@ -175,44 +175,47 @@ def main() -> None:
         raise ValueError("HF_TOKEN environment variable is required")
 
     client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN, timeout=20.0)
-    env = make_env(TASK_NAME)
-    history: List[str] = []
-    rewards: List[float] = []
-    steps_taken = 0
-    score = 0.0
-    success = False
+    task_ids = ["overfit_rescue", "noisy_label_curation", "unstable_robustness"] if TASK_NAME == "all" else [TASK_NAME]
 
-    log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
+    for task_name in task_ids:
+        env = make_env(task_name)
+        history = []
+        rewards: List[float] = []
+        steps_taken = 0
+        score = 0.0
+        success = False
 
-    try:
-        result = env.reset()
+        log_start(task=task_name, env=BENCHMARK, model=MODEL_NAME)
 
-        for step in range(1, min(MAX_STEPS, result.observation.max_steps) + 1):
-            if result.done:
-                break
+        try:
+            result = env.reset()
 
-            action = get_model_action(client, result.observation, history)
-            result = env.step(action)
+            for step in range(1, min(MAX_STEPS, result.observation.max_steps) + 1):
+                if result.done:
+                    break
 
-            reward = float(result.reward or 0.0)
-            error = result.info.get("last_action_error")
-            score = float(result.info.get("score", 0.0))
-            action_str = json.dumps(action.model_dump() if hasattr(action, "model_dump") else action.dict(), sort_keys=True)
+                action = get_model_action(client, result.observation, history)
+                result = env.step(action)
 
-            rewards.append(reward)
-            steps_taken = step
-            log_step(step=step, action=action_str, reward=reward, done=result.done, error=error)
-            history.append(f"Step {step}: {action_str} -> reward {reward:+.2f}, score {score:.3f}")
+                reward = float(result.reward or 0.0)
+                error = result.info.get("last_action_error")
+                score = float(result.info.get("score", 0.0))
+                action_str = json.dumps(action.model_dump() if hasattr(action, "model_dump") else action.dict(), sort_keys=True)
 
-            if result.done or action.kind == "finish":
-                break
+                rewards.append(reward)
+                steps_taken = step
+                log_step(step=step, action=action_str, reward=reward, done=result.done, error=error)
+                history.append(f"Step {step}: {action_str} -> reward {reward:+.2f}, score {score:.3f}")
 
-        score = float(env.score())
-        success = score >= SUCCESS_SCORE_THRESHOLD
+                if result.done or action.kind == "finish":
+                    break
 
-    finally:
-        env.close()
-        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+            score = float(env.score())
+            success = score >= SUCCESS_SCORE_THRESHOLD
+
+        finally:
+            env.close()
+            log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 
 if __name__ == "__main__":

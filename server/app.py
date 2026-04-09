@@ -7,7 +7,9 @@ from typing import Dict
 
 from fastapi import FastAPI
 
+from graders import GRADER_REGISTRY
 from gradlab_env import GradLabAction, GradLabEnv, TASKS, make_env
+from tasks import get_task, list_tasks
 
 
 app = FastAPI(title="GradLab OpenEnv", version="1.0.0")
@@ -27,7 +29,7 @@ def index() -> dict:
     return {
         "name": "GradLab",
         "description": "OpenEnv-style benchmark for diagnosing neural network training failures.",
-        "tasks": GradLabEnv.task_catalog(),
+        "tasks": list_tasks(),
         "reset": "/reset",
     }
 
@@ -71,9 +73,35 @@ def state(session_id: str = "default") -> dict:
 @app.get("/tasks")
 def tasks() -> dict:
     return {
-        "tasks": GradLabEnv.task_catalog(),
+        "tasks": list_tasks(),
         "count": len(TASKS),
     }
+
+
+@app.get("/tasks/{task_id}")
+def task_detail(task_id: str) -> dict:
+    return get_task(task_id)
+
+
+@app.get("/tasks/{task_id}/grader")
+def task_grader(task_id: str) -> dict:
+    task = get_task(task_id)
+    return {
+        "task_id": task_id,
+        "grader": task["grader"],
+    }
+
+
+@app.get("/tasks/{task_id}/grade")
+def grade_task(task_id: str, session_id: str = "default") -> dict:
+    env = _sessions.get(session_id)
+    if env is None or env.task.task_id != task_id:
+        env = make_env(task_id)
+        _sessions[session_id] = env
+    grader = GRADER_REGISTRY[task_id]
+    result = grader(env.state())
+    result["session_id"] = session_id
+    return result
 
 
 @app.get("/schema")
@@ -81,7 +109,7 @@ def schema() -> dict:
     return {
         "env_name": "gradlab",
         "task_count": len(TASKS),
-        "tasks": GradLabEnv.task_catalog(),
+        "tasks": list_tasks(),
         "action_schema": {
             "kind": "inspect|diagnose|repair|evaluate|finish",
             "target": "string",
@@ -103,6 +131,11 @@ def schema() -> dict:
         ],
         "score_range": [0.0, 1.0],
         "reward_range": [-1.0, 1.0],
+        "grader_endpoints": [
+            "/tasks/overfit_rescue/grade",
+            "/tasks/noisy_label_curation/grade",
+            "/tasks/unstable_robustness/grade",
+        ],
     }
 
 
